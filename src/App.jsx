@@ -239,8 +239,8 @@ export default function App() {
     } catch(e){ tk("Erro: "+e.message,"erro"); }
   }
 
-  const rC = useMemo(()=>rows.map(r=>({...r,pts:calcC(r)})),[rows]);
-  const rK = useMemo(()=>rows.map(r=>({...r,pts:calcK(r)})),[rows]);
+  const rC = useMemo(()=>rows.filter(r=>r.status!=="inativo").map(r=>({...r,pts:calcC(r)})),[rows]);
+  const rK = useMemo(()=>rows.filter(r=>r.status!=="inativo").map(r=>({...r,pts:calcK(r)})),[rows]);
   const stC = useMemo(()=>["Maressa","Thayna"].map(n=>{const l=rC.filter(r=>r.cobranca===n);return{n,cnt:l.length,tot:l.reduce((s,r)=>s+r.pts,0),l};}), [rC]);
   const stK = useMemo(()=>["Roberta","Catiana","Adilson","Laila"].map(n=>{const l=rK.filter(r=>r.contador===n);return{n,cnt:l.length,tot:l.reduce((s,r)=>s+r.pts,0),l};}), [rK]);
 
@@ -397,12 +397,22 @@ export default function App() {
         )}
 
         {aba==="carteira"&&(
-          <div style={{overflowX:"auto"}}>
+          <div>
+            <div style={{display:"flex",gap:7,marginBottom:12}}>
+              {["Todos","Ativos","Encerrados"].map(f=><button key={f} onClick={()=>setFiltroC(f==="Todos"?"Todos":f==="Ativos"?"ativo":"inativo")} style={{padding:"5px 13px",borderRadius:20,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:filtroC===(f==="Todos"?"Todos":f==="Ativos"?"ativo":"inativo")?"#0ea5e9":"#1e293b",color:"#fff"}}>{f}</button>)}
+            </div>
+            <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
-              <thead><tr><TH h="Condomínio"/><TH h="Síndico"/><TH h="Unid."/><TH h="Tipo"/><TH h="CAP"/><TH h="Lançamentos"/><TH h="Inadimpl."/><TH h="Pts C"/><TH h="Pts K"/><TH h="Cobrança"/><TH h="Contador"/></tr></thead>
+              <thead><tr><TH h="Status"/><TH h="Condomínio"/><TH h="Síndico"/><TH h="Unid."/><TH h="Tipo"/><TH h="CAP"/><TH h="Lançamentos"/><TH h="Inadimpl."/><TH h="Pts C"/><TH h="Pts K"/><TH h="Cobrança"/><TH h="Contador"/></tr></thead>
               <tbody>
-                {rows.map(r=>{const pc=calcC(r),pk=calcK(r); return(
-                  <tr key={r.id} style={{borderBottom:"1px solid #0f172a",opacity:salvando.has(r.id)?0.6:1}}>
+                {rows.filter(r=>filtroC==="Todos"||(r.status||"ativo")===filtroC).map(r=>{const pc=calcC(r),pk=calcK(r); return(
+                  <tr key={r.id} style={{borderBottom:"1px solid #0f172a",opacity:salvando.has(r.id)?0.6:(r.status==="inativo"?0.4:1)}}>
+                    <td style={{padding:"7px 8px"}}>
+                      <select value={r.status||"ativo"} onChange={e=>atualizar(r.id,"status",e.target.value)} style={{...S,fontSize:10,color:(r.status||"ativo")==="ativo"?"#10b981":"#ef4444"}}>
+                        <option value="ativo">✓ Ativo</option>
+                        <option value="inativo">✕ Encerrado</option>
+                      </select>
+                    </td>
                     <td style={{padding:"7px 8px",fontWeight:600}}>{r.nome}</td>
                     <td style={{padding:"7px 8px",color:"#64748b"}}>{r.sindico||"—"}</td>
                     <td style={{padding:"7px 8px",color:"#94a3b8"}}>{r.unidades}</td>
@@ -418,6 +428,7 @@ export default function App() {
                 );})}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
